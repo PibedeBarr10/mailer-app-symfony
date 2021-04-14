@@ -6,11 +6,12 @@ use App\Service\CreateCSV;
 use App\Service\Mailer;
 use App\Service\UserVerification;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
-class SendMail extends AbstractController
+class SendMailController extends AbstractController
 {
     private Mailer $mailer;
     private CreateCSV $createCSV;
@@ -27,7 +28,7 @@ class SendMail extends AbstractController
     }
 
     /**
-     * @Route("/sendMail", name="sendMail", methods={"GET", "POST"})
+     * @Route("/api/sendMail", name="api_sendMail", methods={"POST"})
      */
     public function sendMail(Request $request): Response
     {
@@ -35,18 +36,25 @@ class SendMail extends AbstractController
             $request->getUser(),
             $request->getPassword()
         )) {
-            return new Response('<p>Błąd - brak dostępu</p>');
+            return new JsonResponse('No auth', 401);
         }
 
-        $data = json_decode($request->getContent());
-        $email = $data->email;
+        $requestData = $request->request->all();
 
-        if (!$email) {
-            return new Response('<p>Błąd - uruchomione bez parametrów</p>');
+        if (empty($requestData)) {
+            $requestData = json_decode($request->getContent(), true);
         }
 
-        $body = $data->body;
-        $file_data = $data->file_data;
+        if (!key_exists('email', $requestData)
+            || !key_exists('body', $requestData)
+            || !key_exists('file_data', $requestData)
+        ) {
+            return new JsonResponse('No required data', 400);
+        }
+
+        $email = $requestData['email'];
+        $body = $requestData['body'];
+        $file_data = $requestData['file_data'];
 
         $this->createCSV->createCSV($file_data);
 
@@ -58,6 +66,6 @@ class SendMail extends AbstractController
             $body
         );
 
-        return new Response("Wysłano raport na adres: ".$email);
+        return new JsonResponse("Wysłano raport na adres: ".$email);
     }
 }
