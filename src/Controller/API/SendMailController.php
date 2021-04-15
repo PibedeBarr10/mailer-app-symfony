@@ -21,7 +21,8 @@ class SendMailController extends AbstractController
         Mailer $mailer,
         UserVerification $userVerification,
         CreateCSV $createCSV
-    ) {
+    )
+    {
         $this->mailer = $mailer;
         $this->createCSV = $createCSV;
         $this->userVerification = $userVerification;
@@ -46,26 +47,35 @@ class SendMailController extends AbstractController
         }
 
         if (!key_exists('email', $requestData)
-            || !key_exists('body', $requestData)
+            || !key_exists('email_data', $requestData)
             || !key_exists('file_data', $requestData)
         ) {
             return new JsonResponse('No required data', 400);
         }
 
         $email = $requestData['email'];
-        $body = $requestData['body'];
+        $email_data = $requestData['email_data'];
         $file_data = $requestData['file_data'];
 
-        $this->createCSV->createCSV($file_data);
+        if (!empty($file_data)) {
+            $this->createCSV->createCSV($file_data);
 
-        $this->mailer->sendMailWithAttachment(
-            $email,
-            'Raport mail from Mailer-App',
-            'mail/index.html.twig',
-            'tasks.csv',
-            $body
-        );
+            $this->mailer->sendMailWithAttachment(
+                $email,
+                'Raport mail from Mailer-App',
+                'mail/index.html.twig',
+                'tasks.csv',
+                $email_data
+            );
+        } else {
+            $this->mailer->sendMail(
+                $email,
+                'Raport mail from Mailer-App',
+                'mail/index.html.twig',
+                $email_data
+            );
+        }
 
-        return new JsonResponse("Wysłano raport na adres: ".$email);
+        return new JsonResponse("Wysłano raport na adres: " . $email);
     }
 }
