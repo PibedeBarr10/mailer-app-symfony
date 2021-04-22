@@ -57,24 +57,26 @@ class SendMailController extends AbstractController
         $email_data = $requestData['email_data'];
         $file_data = $requestData['file_data'];
 
-        if (!empty($file_data)) {
-            $this->createCSV->createCSV($file_data);
-
-            $this->mailer->sendMailWithAttachment(
-                $email,
-                'Raport mail from Mailer-App',
-                'mail/index.html.twig',
-                'tasks.csv',
-                $email_data
-            );
-        } else {
+        if (empty($file_data)) {
             $this->mailer->sendMail(
                 $email,
                 'Raport mail from Mailer-App',
                 'mail/index.html.twig',
                 $email_data
             );
+
+            return new JsonResponse("Wysłano raport na adres: " . $email);
         }
+
+        $this->createCSV->createCSV($file_data);
+
+        $this->mailer->sendMailWithAttachment(
+            $email,
+            'Raport mail from Mailer-App',
+            'mail/index.html.twig',
+            'tasks.csv',
+            $email_data
+        );
 
         return new JsonResponse("Wysłano raport na adres: " . $email);
     }
