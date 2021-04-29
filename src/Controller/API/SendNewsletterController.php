@@ -41,22 +41,24 @@ class SendNewsletterController extends AbstractController
             $requestData = json_decode($request->getContent(), true);
         }
 
-        if (!key_exists('email', $requestData)
+        if (!key_exists('emails', $requestData)
             || !key_exists('newsletter_data', $requestData)
         ) {
             return new JsonResponse('No required data', 400);
         }
 
-        $email = $requestData['email'];
+        $emails = $requestData['emails'];
         $newsletter_data = $requestData['newsletter_data'];
 
-        $this->mailer->sendMail(
-            $email,
-            'Newsletter from Blog-App',
-            'newsletter/index.html.twig',
-            [$newsletter_data]
-        );
+        foreach ($emails as $email) {
+            $this->mailer->sendMail(
+                $email['email'],
+                'Newsletter from Blog-App',
+                'newsletter/index.html.twig',
+                [$newsletter_data]
+            );
+        }
 
-        return new JsonResponse("Wysłano newsletter na adres: " . $email);
+        return new JsonResponse("Wysłano newsletter");
     }
 }
